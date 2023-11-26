@@ -9,13 +9,13 @@
                 "<all_urls>"
             ],
             "js": [
-                "content.js"
+                "src/content.js"
             ]
         }
     ],
     "icons": {
-        "32": "icon32.png",
-        "72": "icon72.png",
-        "128": "icon128.png"
+        "32": "images/icon32.png",
+        "72": "images/icon72.png",
+        "128": "images/icon128.png"
     }
 }
