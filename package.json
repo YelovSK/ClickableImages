@@ -1,8 +1,6 @@
 {
-  "name": "",
   "version": "1.0.0",
-  "description": "",
-  "main": "index.js",
+  "main": "src/content.ts",
   "type": "module",
   "license": "AGPL-version-3.0",
   "private": false,
@@ -10,28 +8,20 @@
     "node": ">= 14.0.0",
     "npm": ">= 6.0.0"
   },
-  "homepage": "",
   "repository": {
     "type": "git",
     "url": ""
   },
-  "bugs": "",
   "keywords": [],
-  "author": {
-    "name": "",
-    "email": "",
-    "url": ""
-  },
   "contributors": [],
   "scripts": {
-    "dev": "",
-    "test": "",
     "clean": "if exist dist rmdir /s /q dist",
     "compile": "npx tsc",
-    "copy-assets": "robocopy .\\ .\\dist\\ /E /XF tsconfig.json /XD src /XD dist",
+    "copy-assets": "robocopy .\\ .\\dist\\ /E /XF tsconfig.json /XF .gitignore /XD src /XD .git /XD dist /XD node_modules",
     "build": "npm run clean && npm run compile && npm run copy-assets"
   },
   "devDependencies": {
+    "@types/chrome": "^0.0.253",
     "chrome-types": "^0.1.246",
     "typescript": "^5.3.2"
   }

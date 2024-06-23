@@ -1,27 +1,36 @@
-function wrapImages() {
-    const images = document.querySelectorAll('img');
+const MOUSE_BUTTON = {
+    LEFT: 0,
+    MIDDLE: 1,
+    RIGHT: 2,
+    BACK: 3,
+    FORWARD: 4
+};
 
-    for (const image of images) {
-        wrapImage(image);
-    }
-}
+// Keep checking the parent elements until the size is different.
+// However, e.g. a 5x5 image can be inside of a 6x6 button, which is realistically still part of the same shit.
+const PARENT_SIZE_THRESHOLD_PERCENT = 5;
 
-function wrapImage(image: HTMLImageElement) {
+function shouldImageBeClickable(image: HTMLImageElement): boolean {
     if (image.parentElement == null) {
-        return;
+        return false;
     }
 
     // Image only website
     if (image.parentElement instanceof HTMLBodyElement && image.parentElement.childNodes.length === 1) {
-        return;
+        return false;
     }
 
-    // Image is already wrapped
+    // Image is already pointing to a link
     if (image.parentElement instanceof HTMLAnchorElement) {
-        return;
+        return false;
     }
 
-    // Check if the image is already wrapped multiple layers above
+    // Button probably has an action?
+    if (image.parentElement instanceof HTMLButtonElement) {
+        return false;
+    }
+
+    // Check if the image is already pointing to a link multiple layers above
     // Assume the parent is the same size as the image
     let currentParent: HTMLElement | null = image.parentElement;
     while (true) {
@@ -31,36 +40,56 @@ function wrapImage(image: HTMLImageElement) {
         }
 
         // Different size than the image
-        if (currentParent.clientWidth !== image.clientWidth || currentParent.clientHeight !== image.clientHeight) {
+        if (Math.abs(currentParent.clientWidth - image.clientWidth) > currentParent.clientWidth * PARENT_SIZE_THRESHOLD_PERCENT ||
+            Math.abs(currentParent.clientHeight - image.clientHeight) > currentParent.clientWidth * PARENT_SIZE_THRESHOLD_PERCENT) {
             break;
         }
 
-        // Found a link that wraps the image
+        // Found anchor -> do not change
         if (currentParent instanceof HTMLAnchorElement) {
-            return;
+            return false;
+        }
+
+        if (currentParent instanceof HTMLButtonElement) {
+            return false;
         }
 
         currentParent = currentParent.parentElement;
     }
 
-    // Save original styles
-    const computedStyle = window.getComputedStyle(image);
-    const style: { [key: string]: string } = {};
-    for (const key of Array.from(computedStyle)) {
-        style[key] = computedStyle.getPropertyValue(key);
+    return true;
+}
+
+function updateImages() {
+    const images = document.querySelectorAll('img');
+
+    for (const image of images) {
+        updateImage(image);
+    }
+}
+
+function updateImage(image: HTMLImageElement) {
+    if (!shouldImageBeClickable(image)) {
+        return;
     }
 
-    const wrapper = document.createElement('a');
-    wrapper.href = image.src;
+    image.onclick = (event: MouseEvent) => {
+        window.open(image.src, '_self');
+    };
 
-    image.parentElement.insertBefore(wrapper, image);
-    wrapper.appendChild(image);
+    image.onmousedown = (event: MouseEvent) => {
+        if (event.button === MOUSE_BUTTON.MIDDLE) {
+            event.preventDefault();
+        }
+    };
 
-    // Apply styles
-    for (const key of Object.keys(style)) {
-        image.style.setProperty(key, style[key]);
-    }
-    image.style.setProperty('cursor', 'pointer');
+    image.onauxclick = (event: MouseEvent) => {
+        if (event.button === MOUSE_BUTTON.MIDDLE) {
+            window.open(image.src);
+        }
+    };
+
+    image.style.cursor = 'pointer';
 }
 
 function handleMutations(mutations: MutationRecord[]) {
@@ -70,14 +99,14 @@ function handleMutations(mutations: MutationRecord[]) {
         for (const node of mutation.addedNodes) {
             if (node instanceof HTMLImageElement) {
                 node.addEventListener('load', () => {
-                    wrapImage(node);
+                    updateImage(node);
                 });
             }
         }
     }
 }
 
-wrapImages();
+updateImages();
 
 // Subscribe to newly added images
 const observer: MutationObserver = new MutationObserver(handleMutations);
